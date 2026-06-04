@@ -180,6 +180,19 @@ docker-compose up -d neo4j postgres qdrant redis
 | `ontology/deliverables/03_500_TORAH_CONCEPTS.md` | 500 real concepts stress-tested across 5 domains |
 | `ontology/models/DISPUTE_MODEL.md` | 7 dispute types, Dispute Engine architecture |
 | `ontology/models/EVIDENCE_MODEL.md` | 7 evidence levels, validation rules, AI extraction pipeline |
+
+### Scripts Reference
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/sefaria_extractor.py` | Fetch texts from Sefaria API (1 req/sec rate limit) |
+| `scripts/transform_for_neo4j.py` | Convert raw Sefaria JSON → Neo4j JSONL nodes + relationships |
+| `scripts/batch_extract.py` | Orchestrate extract → transform for multiple books |
+| `scripts/bulk_import_collection.py` | Bulk import Hebrew text collections (DOCX → JSONL) |
+| `scripts/bulk_import_sync.py` | Synchronize bulk imports with Neo4j |
+| `scripts/docx_parser.py` | Parse Hebrew DOCX files into structured Torah text |
+| `scripts/load_jsonl_to_neo4j.py` | Load processed JSONL files into Neo4j via UNWIND |
+| `scripts/load_to_neo4j.py` | Legacy Cypher-based loader |
 | `ontology/models/LEARNING_MODEL.md` | 8-stage learning pipeline for new books |
 | `ontology/models/VALIDATION_MODEL.md` | 5 validation levels, diversity requirements |
 | `ontology/v1/ONTOLOGY_V1.md` | Baseline: 70% clean, 30% flagged |
