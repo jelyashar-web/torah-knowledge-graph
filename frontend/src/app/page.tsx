@@ -1,24 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import { VerseCard } from "@/components/VerseCard";
 import { GraphView } from "@/components/GraphView";
-import { searchVerses } from "@/lib/api";
-import { Book, Network, Database, Layers } from "lucide-react";
+import { OllamaChat } from "@/components/OllamaChat";
+import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
+import { searchVerses, listBooks } from "@/lib/api";
+import { Book, Network, Database, BarChart3, MessageSquare, ChevronRight } from "lucide-react";
 
 export default function Home() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"search" | "graph">("search");
+  const [activeTab, setActiveTab] = useState<"search" | "graph" | "chat" | "analytics">("search");
+  const [books, setBooks] = useState<any[]>([]);
+  const [selectedBook, setSelectedBook] = useState<string | null>(null);
+
+  // Load books on mount
+  useEffect(() => {
+    listBooks().then((data) => {
+      if (data.books) setBooks(data.books);
+    }).catch(console.error);
+  }, []);
 
   const handleSearch = async (q: string) => {
     setLoading(true);
     setQuery(q);
     try {
-      const data = await searchVerses(q, undefined, 20);
+      const data = await searchVerses(q, selectedBook || undefined, 20);
       setResults(data.results || []);
+      setActiveTab("search");
     } catch (e) {
       console.error(e);
       setResults([]);
@@ -27,81 +39,116 @@ export default function Home() {
     }
   };
 
+  const tabs = [
+    { id: "search", label: "חיפוש", icon: Book },
+    { id: "graph", label: "גרף", icon: Network },
+    { id: "chat", label: "AI Chat", icon: MessageSquare },
+    { id: "analytics", label: "אנליטיקס", icon: BarChart3 },
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Header */}
-      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 py-6">
+      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Database className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   Torah Knowledge Graph
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  גרף ידע תורני חי — 1.4M+ nodes
+                  גרף ידע תורני חי — 1.4M+ nodes | Ollama AI
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setActiveTab("search")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  activeTab === "search"
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                }`}
-              >
-                <Book className="w-4 h-4" />
-                חיפוש
-              </button>
-              <button
-                onClick={() => setActiveTab("graph")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  activeTab === "graph"
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
-                }`}
-              >
-                <Network className="w-4 h-4" />
-                גרף
-              </button>
+
+            <div className="flex gap-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                    activeTab === tab.id
+                      ? "bg-blue-600 text-white shadow-md"
+                      : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
+                  }`}
+                >
+                  <tab.icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </button>
+              ))}
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {activeTab === "search" && (
-          <>
-            {/* Search */}
-            <div className="mb-8">
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        {/* Search Bar — always visible */}
+        <div className="mb-6">
+          <div className="flex gap-2 mb-4">
+            <div className="flex-1">
               <SearchBar onSearch={handleSearch} loading={loading} />
             </div>
+          </div>
 
-            {/* Stats */}
+          {/* Book Filter */}
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            <button
+              onClick={() => setSelectedBook(null)}
+              className={`px-3 py-1 rounded-full text-sm whitespace-nowrap transition-colors ${
+                !selectedBook
+                  ? "bg-blue-600 text-white"
+                  : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+              }`}
+            >
+              הכל
+            </button>
+            {books.slice(0, 20).map((book: any) => (
+              <button
+                key={book.title}
+                onClick={() => setSelectedBook(book.title)}
+                className={`px-3 py-1 rounded-full text-sm whitespace-nowrap transition-colors ${
+                  selectedBook === book.title
+                    ? "bg-blue-600 text-white"
+                    : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                }`}
+              >
+                {book.title}
+              </button>
+            ))}
+            {books.length > 20 && (
+              <span className="text-sm text-slate-500 px-2">+{books.length - 20} עוד...</span>
+            )}
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === "search" && (
+          <>
             {query && (
-              <div className="flex items-center gap-4 mb-6 text-sm text-slate-600 dark:text-slate-400">
-                <Layers className="w-4 h-4" />
+              <div className="flex items-center gap-2 mb-4 text-sm text-slate-600 dark:text-slate-400">
+                <ChevronRight className="w-4 h-4" />
                 <span>
                   {loading
                     ? "מחפש..."
-                    : `${results.length} תוצאות עבור "${query}"`}
+                    : `${results.length} תוצאות עבור "${query}"${selectedBook ? ` בספר ${selectedBook}` : ""}`}
                 </span>
               </div>
             )}
 
-            {/* Results */}
             <div className="space-y-4">
               {results.map((verse: any, i: number) => (
                 <VerseCard key={`${verse.ref}-${i}`} verse={verse} />
               ))}
               {!loading && results.length === 0 && query && (
-                <div className="text-center py-12 text-slate-500">
-                  לא נמצאו תוצאות
+                <div className="text-center py-12">
+                  <Book className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                  <p className="text-slate-500">לא נמצאו תוצאות</p>
+                  <p className="text-sm text-slate-400 mt-1">נסה חיפוש אחר או בדוק אם Neo4j רץ</p>
                 </div>
               )}
             </div>
@@ -112,33 +159,25 @@ export default function Home() {
           <div className="space-y-6">
             <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
               <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">
-                ויזואליזציית גרף
+                ויזואליזציית גרף אינטראקטיבית
               </h2>
               <p className="text-slate-600 dark:text-slate-400 mb-4">
-                גרף אינטראקטיבי של ספרים, פרקים, פסוקים, וישויות.
-                לחץ על נוד כדי לחקור קשרים.
+                גרף של ספרים, פרקים, פסוקים וישויות. גרור, זום, ולחץ על נודים לחקירה.
               </p>
               <GraphView />
             </div>
+          </div>
+        )}
 
-            {/* Torah Domains */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { name: "תנ״ך", count: "39 ספרים", color: "bg-blue-500" },
-                { name: "חסידות", count: "~500 ספרים", color: "bg-purple-500" },
-                { name: "הלכה", count: "~200 ספרים", color: "bg-green-500" },
-                { name: "קבלה", count: "~100 ספרים", color: "bg-amber-500" },
-              ].map((domain) => (
-                <div
-                  key={domain.name}
-                  className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-shadow cursor-pointer"
-                >
-                  <div className={`w-3 h-3 rounded-full ${domain.color} mb-2`} />
-                  <h3 className="font-bold text-slate-900 dark:text-white">{domain.name}</h3>
-                  <p className="text-sm text-slate-500">{domain.count}</p>
-                </div>
-              ))}
-            </div>
+        {activeTab === "chat" && (
+          <div className="max-w-4xl mx-auto">
+            <OllamaChat />
+          </div>
+        )}
+
+        {activeTab === "analytics" && (
+          <div>
+            <AnalyticsDashboard />
           </div>
         )}
       </main>
