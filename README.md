@@ -20,9 +20,9 @@ This is **not** a RAG system. **Not** a search engine. **Not** a chatbot. It is 
 
 | Phase | Books | Extracted | Status |
 |-------|-------|-----------|--------|
-| **1 — Torah** | Genesis, Exodus, Leviticus, Numbers, Deuteronomy | 5/5 | ✅ Complete |
-| **2 — Nevi'im** | Joshua, Judges, I Samuel, II Samuel, I Kings, II Kings, Isaiah, Jeremiah, Ezekiel, Hosea, Joel, Amos, Obadiah, Jonah, Micah, Nahum, Habakkuk, Zephaniah, Haggai, Zechariah, Malachi | 0/21 | ⏳ In Progress |
-| **3 — Ketuvim** | Psalms, Proverbs, Job, Song of Songs, Ruth, Lamentations, Ecclesiastes, Esther, Daniel, Ezra, Nehemiah, I Chronicles, II Chronicles | 3/13 | 🔄 Partial |
+| **1 — Torah** | Genesis ✓, Exodus ✓, Leviticus ✓, Numbers ✓, Deuteronomy ✓ | 5/5 | ✅ Complete |
+| **2 — Nevi'im** | Joshua ✓, Judges ✓, I Samuel ✓, II Samuel ✓, I Kings ✓, II Kings ✓, Isaiah ✓, Jeremiah ✓, Ezekiel ✓, Hosea ✓, Joel ✓, Amos ✓, Obadiah ✓, Jonah ✓, Micah ✓, Nahum ✓, Habakkuk ✓, Zephaniah ✓, Haggai ✓, Zechariah ✓, Malachi ✓ | 21/21 | ✅ Complete |
+| **3 — Ketuvim** | Psalms ✓, Proverbs ✓, Job ✓, Song of Songs ✓, Ruth ✓, Lamentations ✓, Ecclesiastes ✓, Esther ✓, Daniel ✓, Ezra ✓, Nehemiah ✓, I Chronicles ✓, II Chronicles ✓ | 13/13 | ✅ Complete |
 | **4 — Mishnah** | 63 tractates | 0/63 | 📋 Planned |
 | **5 — Talmud Bavli** | 37 tractates | 0/37 | 📋 Planned |
 | **6 — Kabbalah** | Zohar, Tikkunei Zohar, etc. | 0/? | 📋 Planned |
@@ -30,7 +30,8 @@ This is **not** a RAG system. **Not** a search engine. **Not** a chatbot. It is 
 
 > **Last updated:** 2026-06-04  
 > **Source:** Sefaria.org API (1 req/sec rate limit)  
-> **Format:** Hebrew + English, verse-level JSON → Neo4j JSONL
+> **Format:** Hebrew + English, verse-level JSON → Neo4j JSONL  
+> **Total:** 39 Tanakh books | ~75 MB raw | ~38 MB processed JSONL
 
 ---
 
@@ -204,7 +205,14 @@ docker-compose up -d neo4j postgres qdrant redis
 ## Ingestion Flow (Current Working Pipeline)
 
 **Stage 1 — Extract:**
-```
+```bash
+# Extract a single book
+uv run python scripts/sefaria_extractor.py --book Genesis --output data/raw/
+
+# Extract multiple books via batch
+uv run python scripts/batch_extract.py --books Genesis Exodus Leviticus --output data/
+
+# Extract from a phase manifest
 uv run python scripts/batch_extract.py --phase-file data/manifests/phase1_torah.txt --output data/
     │
     ├─ sefaria_extractor.py → fetch index → total_refs=N
@@ -223,8 +231,6 @@ uv run python scripts/batch_extract.py --phase-file data/manifests/phase1_torah.
 # Use Cypher UNWIND or neo4j-admin import
 python scripts/load_jsonl_to_neo4j.py --nodes data/processed/Genesis_nodes.jsonl --relationships data/processed/Genesis_relationships.jsonl
 ```
-
-> **Future:** The full FastAPI → PostgreSQL → Celery pipeline is planned for Phase 3 (see `docs/IMPLEMENTATION_ROADMAP.md`). Today, extraction runs directly via Python scripts.
 
 ## Search Flow
 
