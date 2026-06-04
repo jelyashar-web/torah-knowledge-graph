@@ -4,6 +4,7 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette_prometheus import metrics, PrometheusMiddleware
+from strawberry.fastapi import GraphQLRouter
 
 # Ensure Celery app is configured before importing tasks
 from app.celery_app import celery_app  # noqa: F401
@@ -11,6 +12,7 @@ from app.config import settings
 from app.neo4j_client import init_schema as init_neo4j_schema
 from app.qdrant_client import init_collection as init_qdrant_collection
 from app.routers import discover, graph, health, ingest, search
+from app.graphql.schema import schema
 
 logger = structlog.get_logger()
 
@@ -39,6 +41,15 @@ app.include_router(ingest.router)
 app.include_router(search.router)
 app.include_router(graph.router)
 app.include_router(discover.router)
+
+# GraphQL
+graphql_router = GraphQLRouter(
+    schema,
+    path="/graphql",
+    graphiql=True,
+    allow_queries_via_get=True,
+)
+app.include_router(graphql_router, prefix="/graphql")
 
 
 @app.on_event("startup")

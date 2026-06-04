@@ -7,7 +7,8 @@ import { AdvancedGraphExplorer } from "@/components/AdvancedGraphExplorer";
 import { AIChat } from "@/components/AIChat";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { searchVerses, listBooks } from "@/lib/api";
-import { Book, Network, Database, BarChart3, MessageSquare, ChevronRight } from "lucide-react";
+import { Book, Network, Database, BarChart3, MessageSquare, ChevronRight, Code2 } from "lucide-react";
+import { GraphQLExplorer } from "@/components/GraphQLExplorer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useI18n } from "@/components/I18nProvider";
 
@@ -16,7 +17,7 @@ export default function Home() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"search" | "graph" | "chat" | "analytics">("search");
+  const [activeTab, setActiveTab] = useState<"search" | "graph" | "chat" | "graphql" | "analytics">("search");
   const [books, setBooks] = useState<any[]>([]);
   const [selectedBook, setSelectedBook] = useState<string | null>(null);
 
@@ -46,6 +47,7 @@ export default function Home() {
     { id: "search", label: "חיפוש", icon: Book },
     { id: "graph", label: "גרף", icon: Network },
     { id: "chat", label: "AI Chat", icon: MessageSquare },
+    { id: "graphql", label: "GraphQL", icon: Code2 },
     { id: "analytics", label: "אנליטיקס", icon: BarChart3 },
   ];
 
@@ -191,6 +193,12 @@ export default function Home() {
         {activeTab === "chat" && (
           <div className="max-w-4xl mx-auto">
             <AIChat />
+          </div>
+        )}
+
+        {activeTab === "graphql" && (
+          <div className="max-w-5xl mx-auto">
+            <GraphQLExplorer />
           </div>
         )}
 
