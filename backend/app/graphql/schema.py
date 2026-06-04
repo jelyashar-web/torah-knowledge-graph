@@ -163,6 +163,7 @@ class SearchInput:
     book_filter: Optional[str] = None
     limit: Optional[int] = 20
     semantic: Optional[bool] = False
+    semantic_weight: Optional[float] = 0.5  # 0=fulltext, 1=semantic
 
 
 # ── Query Resolver ──────────────────────────────────────
@@ -201,11 +202,43 @@ class Query:
 
     @strawberry.field
     async def search(self, info: Info, input: SearchInput) -> List[SearchResult]:
-        """Unified search: fulltext + optional semantic."""
+        """Unified search: fulltext + optional semantic + hybrid RRF."""
         from app.neo4j_client import neo4j_client
+        from app.embeddings import TorahVectorStore
         results = []
+        semantic_results = []
 
-        # 1. Fulltext search on verses
+        # 1. Semantic search (if enabled)
+        if input.semantic:
+            try:
+                store = TorahVectorStore()
+                filters = None
+                if input.book_filter:
+                    from qdrant_client.models import FieldCondition, MatchValue
+                    filters = {
+                        "must": [FieldCondition(key="book", match=MatchValue(value=input.book_filter))]
+                    }
+                vector_results = await store.search(input.query, limit=input.limit or 20, filters=filters)
+                for r in vector_results:
+                    semantic_results.append(
+                        SearchResult(
+                            score=r["score"],
+                            verse=Verse(
+                                id=r["ref"],
+                                ref=r["ref"],
+                                hebrew=r.get("hebrew"),
+                                english=r.get("english"),
+                                book=r.get("book", ""),
+                                chapter=r.get("chapter", 0),
+                                verse=r.get("verse", 0),
+                            ),
+                            source="semantic",
+                        )
+                    )
+            except Exception as e:
+                logger.warning("graphql_semantic_search_failed", error=str(e))
+
+        # 2. Fulltext search on verses
         if input.search_type in ("all", "verse"):
             try:
                 cypher = """
@@ -237,7 +270,23 @@ class Query:
             except Exception as e:
                 logger.error("graphql_search_failed", error=str(e))
 
-        # 2. Entity search
+        # 3. Hybrid merge with RRF if semantic enabled
+        if input.semantic and semantic_results:
+            k = 60
+            rrf_scores = {}
+            for rank, r in enumerate(results, start=1):
+                ref = r.verse.ref if r.verse else ""
+                rrf_scores[ref] = rrf_scores.get(ref, 0) + (1 - input.semantic_weight) / (k + rank)
+            for rank, r in enumerate(semantic_results, start=1):
+                ref = r.verse.ref if r.verse else ""
+                rrf_scores[ref] = rrf_scores.get(ref, 0) + input.semantic_weight / (k + rank)
+
+            # Reorder by RRF score
+            merged = results + [r for r in semantic_results if r.verse.ref not in {x.verse.ref for x in results}]
+            merged.sort(key=lambda x: rrf_scores.get(x.verse.ref if x.verse else "", 0), reverse=True)
+            return merged[:input.limit]
+
+        # 4. Entity search
         if input.search_type in ("all", "entity"):
             try:
                 cypher = """

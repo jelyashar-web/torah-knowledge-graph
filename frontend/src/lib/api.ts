@@ -21,6 +21,11 @@ export interface SearchResponse {
   query: string;
   results: VerseResult[];
   count: number;
+  search_type?: string;
+  model?: string;
+  semantic_weight?: number;
+  fulltext_count?: number;
+  semantic_count?: number;
 }
 
 export interface ChatMessage {
@@ -57,13 +62,20 @@ async function queryNeo4j(cypher: string, params: Record<string, any> = {}): Pro
 export async function searchVerses(
   query: string,
   book?: string,
-  limit: number = 20
+  limit: number = 20,
+  searchType: "fulltext" | "semantic" | "hybrid" = "hybrid",
+  semanticWeight: number = 0.5
 ): Promise<SearchResponse> {
   try {
-    // Try FastAPI first
-    const params = new URLSearchParams({ q: query, limit: String(limit) });
+    // Try FastAPI first with search type
+    const params = new URLSearchParams({
+      q: query,
+      limit: String(limit),
+      search_type: searchType,
+      semantic_weight: String(semanticWeight),
+    });
     if (book) params.set("book", book);
-    const res = await fetch(`${API_BASE}/api/v1/search/fulltext?${params}`, { signal: AbortSignal.timeout(3000) });
+    const res = await fetch(`${API_BASE}/api/v1/search/?${params}`, { signal: AbortSignal.timeout(8000) });
     if (res.ok) return await res.json();
   } catch {
     // Fallback to Neo4j direct
@@ -85,7 +97,7 @@ export async function searchVerses(
     score: r.verse?.score || r.score,
   }));
 
-  return { query, results, count: results.length };
+  return { query, results, count: results.length, search_type: "fulltext" };
 }
 
 // ── Verse Context ──────────────────────────────────────

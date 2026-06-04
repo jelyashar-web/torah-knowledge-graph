@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { SearchBar } from "@/components/SearchBar";
+import { SearchBar, SearchOptions } from "@/components/SearchBar";
 import { VerseCard } from "@/components/VerseCard";
 import { AdvancedGraphExplorer } from "@/components/AdvancedGraphExplorer";
 import { AIChat } from "@/components/AIChat";
@@ -28,11 +28,17 @@ export default function Home() {
     }).catch(console.error);
   }, []);
 
-  const handleSearch = async (q: string) => {
+  const handleSearch = async (q: string, options?: SearchOptions) => {
     setLoading(true);
     setQuery(q);
     try {
-      const data = await searchVerses(q, selectedBook || undefined, 20);
+      const data = await searchVerses(
+        q,
+        selectedBook || undefined,
+        20,
+        options?.searchType || "hybrid",
+        options?.semanticWeight || 0.5
+      );
       setResults(data.results || []);
       setActiveTab("search");
     } catch (e) {
