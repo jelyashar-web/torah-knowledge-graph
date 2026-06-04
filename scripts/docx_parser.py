@@ -22,6 +22,8 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from hebrew_utils import normalize_hebrew
+
 
 def book_uuid(title: str) -> str:
     """Generate a deterministic UUID for a Book node based on its title.
@@ -83,6 +85,32 @@ def clean_text(text: str) -> str:
     # Normalize RTL markers
     text = re.sub(r"[‪-‮]", "", text)
     return text.strip()
+
+
+# Hebrew heading patterns for Torah literature structure detection
+HEBREW_HEADING_PATTERNS = {
+    "פרק": re.compile(r"^\s*פרק\s+[א-ת״׳]+"),
+    "סימן": re.compile(r"^\s*סימן\s+[א-ת0-9]+"),
+    "סעיף": re.compile(r"^\s*סעיף\s+[א-ת0-9]+"),
+    "הלכה": re.compile(r"^\s*הלכה\s+[א-ת0-9]+"),
+    "משנה": re.compile(r"^\s*משנה\s+[א-ת0-9]+"),
+    "דף": re.compile(r"^\s*דף\s+[א-ת]+"),
+    "עמוד": re.compile(r"^\s*עמוד\s+[א-ב]+"),
+    "שער": re.compile(r"^\s*שער\s+[א-ת]+"),
+    "דרוש": re.compile(r"^\s*דרוש\s+[א-ת]+"),
+    "אות": re.compile(r"^\s*אות\s+[א-ת]+"),
+}
+
+
+def detect_heading(text: str) -> str | None:
+    """Detect if a paragraph is a Hebrew heading.
+
+    Returns the heading type (e.g. 'פרק', 'סימן') or None.
+    """
+    for heading_type, pattern in HEBREW_HEADING_PATTERNS.items():
+        if pattern.search(text):
+            return heading_type
+    return None
 
 
 def detect_structure(paragraphs: list[str]) -> str:
@@ -265,8 +293,23 @@ def parse_chumash(paragraphs: list[dict[str, Any]], book_title: str) -> dict[str
     }
 
 
-def parse_free_form(paragraphs: list[dict[str, Any]], book_title: str) -> dict[str, Any]:
-    """Parse free-form text (Chassidut, Mussar, etc.) with chunking."""
+def parse_free_form(
+    paragraphs: list[dict[str, Any]],
+    book_title: str,
+    source_file: str = "",
+    file_sha256: str = "",
+) -> dict[str, Any]:
+    """Parse free-form text (Chassidut, Mussar, etc.) into TextUnit nodes.
+
+    Creates:
+      - Book node
+      - TextUnit nodes (one per paragraph or logical section)
+      - PART_OF: TextUnit -> Book
+      - NEXT: TextUnit -> TextUnit (sequential)
+      - SOURCE_FILE: Book -> FileInfo (if source_file provided)
+
+    Detects Hebrew headings: פרק, סימן, סעיף, הלכה, משנה, דף, עמוד, שער, דרוש, אות.
+    """
     nodes: list[dict[str, Any]] = []
     relationships: list[dict[str, Any]] = []
 
@@ -283,65 +326,122 @@ def parse_free_form(paragraphs: list[dict[str, Any]], book_title: str) -> dict[s
         },
     })
 
-    # Chunk paragraphs into sections (~500 chars each)
-    chunks = []
-    current_chunk = []
-    current_len = 0
+    # Optional: source file node
+    file_id = None
+    if source_file:
+        file_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"file.{file_sha256 or source_file}"))
+        nodes.append({
+            "id": file_id,
+            "label": "SourceFile",
+            "properties": {
+                "path": source_file,
+                "sha256": file_sha256 or "",
+                "format": "docx",
+                "corpus": "Torat_Emet_Collection",
+            },
+        })
+        relationships.append({
+            "type": "SOURCE_FILE",
+            "from_id": book_id,
+            "to_id": file_id,
+            "properties": {
+                "relationship_type": "origin",
+                "confidence": 1.0,
+                "source": "scan_docx_library",
+            },
+        })
 
+    # Build TextUnit nodes — one per non-empty paragraph
+    unit_nodes: list[dict[str, Any]] = []
+    prev_unit_id: str | None = None
+    unit_counter = 0
+
+    import re as _re
     for para in paragraphs:
         text = para["text"]
-        if not text:
+        if not text or not text.strip():
             continue
-        if para["is_heading"] and current_chunk:
-            chunks.append(" ".join(current_chunk))
-            current_chunk = []
-            current_len = 0
-        current_chunk.append(text)
-        current_len += len(text)
-        if current_len > 500:
-            chunks.append(" ".join(current_chunk))
-            current_chunk = []
-            current_len = 0
+        # Skip paragraphs that contain only punctuation/whitespace
+        if not _re.sub(r"[^\w\s]", "", text.strip()):
+            continue
 
-    if current_chunk:
-        chunks.append(" ".join(current_chunk))
+        unit_counter += 1
+        unit_id = str(uuid.uuid4())
+        heading_type = detect_heading(text)
+        is_heading = heading_type is not None or para["is_heading"]
 
-    for i, chunk_text in enumerate(chunks):
-        chunk_id = str(uuid.uuid4())
-        nodes.append({
-            "id": chunk_id,
-            "label": "TextChunk",
+        # Detect hierarchy level from heading
+        hierarchy_level = None
+        if heading_type:
+            hierarchy_level = heading_type
+
+        unit_nodes.append({
+            "id": unit_id,
+            "label": "TextUnit",
             "properties": {
                 "book": book_title,
-                "chunk_number": i + 1,
-                "text_hebrew": chunk_text,
+                "unit_number": unit_counter,
+                "text_hebrew": text,
+                "text_hebrew_normalized": normalize_hebrew(text),
+                "is_heading": is_heading,
+                "heading_type": heading_type,
+                "hierarchy_level": hierarchy_level,
+                "paragraph_index": para.get("index", 0),
+                "style": para.get("style", "Normal"),
                 "language": "hebrew",
                 "source": "Torat Emet",
                 "license": "CC BY-NC-SA 2.5",
             },
         })
+
+        # PART_OF: TextUnit -> Book
         relationships.append({
             "type": "PART_OF",
-            "from_id": chunk_id,
+            "from_id": unit_id,
             "to_id": book_id,
             "properties": {
-                "part_type": "chunk_of_book",
-                "order_index": i + 1,
+                "part_type": "unit_of_book",
+                "order_index": unit_counter,
                 "confidence": 1.0,
                 "source": "Torat Emet",
-                "extraction_method": "docx_parser_chunked",
+                "extraction_method": "docx_parser_textunit",
             },
         })
+
+        # NEXT: TextUnit -> TextUnit (sequential reading order)
+        if prev_unit_id is not None:
+            relationships.append({
+                "type": "NEXT",
+                "from_id": prev_unit_id,
+                "to_id": unit_id,
+                "properties": {
+                    "relationship_type": "sequential",
+                    "order_index": unit_counter - 1,
+                    "confidence": 1.0,
+                    "source": "Torat Emet",
+                    "extraction_method": "docx_parser_textunit",
+                },
+            })
+
+        prev_unit_id = unit_id
+
+    nodes.extend(unit_nodes)
 
     return {
         "book": book_title,
         "nodes": nodes,
         "relationships": relationships,
-        "structure": "free_form_chunked",
+        "structure": "textunit_sequential",
+        "units": len(unit_nodes),
     }
 
 
-def parse_docx(docx_path: Path, book_title: str | None = None) -> dict[str, Any]:
+def parse_docx(
+    docx_path: Path,
+    book_title: str | None = None,
+    source_file: str = "",
+    file_sha256: str = "",
+) -> dict[str, Any]:
     """Main entry point: parse a .docx file and return structured data."""
     if book_title is None:
         book_title = docx_path.stem
@@ -359,10 +459,10 @@ def parse_docx(docx_path: Path, book_title: str | None = None) -> dict[str, Any]
         # If Chumash parser failed to extract verses, fall back to free-form
         if len(result["nodes"]) <= 1:
             logger.info("chumash_parser_empty_fallback", book=book_title)
-            return parse_free_form(paragraphs, book_title)
+            return parse_free_form(paragraphs, book_title, source_file, file_sha256)
         return result
     else:
-        return parse_free_form(paragraphs, book_title)
+        return parse_free_form(paragraphs, book_title, source_file, file_sha256)
 
 
 def save_jsonl(data: dict[str, Any], output_dir: Path) -> tuple[Path, Path]:
@@ -392,15 +492,29 @@ def save_jsonl(data: dict[str, Any], output_dir: Path) -> tuple[Path, Path]:
     return nodes_file, rels_file
 
 
-def parse_directory(dir_path: Path, output_dir: Path) -> list[dict[str, Any]]:
-    """Parse all .docx files in a directory recursively."""
-    results = []
-    docx_files = list(dir_path.rglob("*.docx"))
-    logger.info("directory_scan", path=str(dir_path), files_found=len(docx_files))
+def parse_directory(
+    dir_path: Path,
+    output_dir: Path,
+    limit: int = 0,
+) -> list[dict[str, Any]]:
+    """Parse all .docx files in a directory recursively.
 
-    for docx_file in sorted(docx_files):
+    Args:
+        dir_path: Root directory to scan
+        output_dir: Where to write JSONL files
+        limit: Maximum files to parse (0 = no limit)
+    """
+    results = []
+    docx_files = sorted(dir_path.rglob("*.docx"))
+    if limit > 0:
+        docx_files = docx_files[:limit]
+
+    logger.info("directory_scan", path=str(dir_path), files_found=len(docx_files), limit=limit)
+
+    for docx_file in docx_files:
         try:
-            result = parse_docx(docx_file)
+            rel_path = str(docx_file.relative_to(dir_path))
+            result = parse_docx(docx_file, source_file=rel_path)
             if result["nodes"]:
                 save_jsonl(result, output_dir)
                 results.append(result)
