@@ -165,7 +165,12 @@ export async function getBookStructure(book: string): Promise<any> {
 
 // ── Ollama Chat ─────────────────────────────────────────
 
-export async function chatWithOllama(message: string, context: string = ""): Promise<string> {
+export async function chatWithAI(
+  message: string,
+  context: string = "",
+  provider: "ollama" | "kimi" = "ollama",
+  model?: string
+): Promise<{ response: string; provider: string }> {
   const systemPrompt = `You are a Torah scholar AI. Answer questions about Jewish texts, Hebrew Bible, and Jewish law. Always cite sources (book, chapter, verse). Answer in Hebrew or English as appropriate. Be thorough and accurate.`;
 
   const messages: Array<{ role: string; content: string }> = [
@@ -178,12 +183,15 @@ export async function chatWithOllama(message: string, context: string = ""): Pro
   messages.push({ role: "user", content: message });
 
   try {
-    // Call local Next.js API proxy (avoids CORS)
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, model: "llama3.1:8b" }),
-      signal: AbortSignal.timeout(30000),
+      body: JSON.stringify({
+        messages,
+        provider,
+        model: model || (provider === "kimi" ? "kimi-k2-6" : "llama3.1:8b"),
+      }),
+      signal: AbortSignal.timeout(provider === "kimi" ? 60000 : 30000),
     });
 
     if (!res.ok) {
@@ -192,11 +200,23 @@ export async function chatWithOllama(message: string, context: string = ""): Pro
     }
 
     const data = await res.json();
-    return data.response || "No response";
+    return {
+      response: data.response || "No response",
+      provider: data.provider || provider,
+    };
   } catch (e: any) {
-    console.error("Ollama error:", e);
-    return "⚠️ Ollama is not available. Make sure Ollama is running: `ollama serve`";
+    console.error(`${provider} error:`, e);
+    return {
+      response: `⚠️ ${provider} error: ${e.message}`,
+      provider,
+    };
   }
+}
+
+// Backward compat
+export async function chatWithOllama(message: string, context: string = ""): Promise<string> {
+  const result = await chatWithAI(message, context, "ollama");
+  return result.response;
 }
 
 // ── Analytics ───────────────────────────────────────────

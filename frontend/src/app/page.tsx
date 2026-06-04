@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import { VerseCard } from "@/components/VerseCard";
 import { AdvancedGraphExplorer } from "@/components/AdvancedGraphExplorer";
-import { OllamaChat } from "@/components/OllamaChat";
+import { AIChat } from "@/components/AIChat";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { searchVerses, listBooks } from "@/lib/api";
 import { Book, Network, Database, BarChart3, MessageSquare, ChevronRight } from "lucide-react";
@@ -163,7 +163,7 @@ export default function Home() {
 
         {activeTab === "chat" && (
           <div className="max-w-4xl mx-auto">
-            <OllamaChat />
+            <AIChat />
           </div>
         )}
 
