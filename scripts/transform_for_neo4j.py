@@ -15,9 +15,12 @@ import argparse
 import html
 import json
 import re
+import sys
 import uuid
 from pathlib import Path
 from typing import Any
+
+from hebrew_utils import normalize_hebrew
 
 
 def generate_uuid() -> str:
@@ -179,6 +182,7 @@ def transform_tanakh(raw_file: Path, output_dir: Path) -> dict[str, Any]:
                     "chapter": chapter_num,
                     "verse_number": verse_num,
                     "text_hebrew": v["hebrew"],
+                    "text_hebrew_normalized": normalize_hebrew(v["hebrew"]),
                     "text_english": v["english"],
                     "language": "hebrew",
                     "category": category[0] if category else "Tanakh",
