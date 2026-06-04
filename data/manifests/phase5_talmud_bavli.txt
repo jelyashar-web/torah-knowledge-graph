@@ -1,0 +1,37 @@
+# Phase 5: Talmud Bavli Core Tractates
+Berakhot
+Shabbat
+Eruvin
+Pesahim
+Yoma
+Sukkah
+Beitzah
+Rosh Hashanah
+Taanit
+Megillah
+Moed Katan
+Hagigah
+Yevamot
+Ketubot
+Nedarim
+Nazir
+Sotah
+Gittin
+Kiddushin
+Bava Kamma
+Bava Metzia
+Bava Batra
+Sanhedrin
+Makkot
+Shevuot
+Avodah Zarah
+Horayot
+Zevahim
+Menahot
+Hullin
+Bekhorot
+Arakhin
+Temurah
+Keritot
+Meilah
+Niddah

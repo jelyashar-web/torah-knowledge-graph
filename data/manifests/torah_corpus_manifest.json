@@ -1,0 +1,276 @@
+{
+  "version": "1.0.0",
+  "description": "Complete Torah Knowledge Graph corpus manifest. All texts needed for the graph.",
+  "source": "Sefaria.org API",
+  "api_base": "https://www.sefaria.org/api",
+  "rate_limit": "1 request per second",
+  "total_estimated_books": 250,
+  "total_estimated_verses": 350000,
+  "categories": {
+    "Tanakh": {
+      "priority": 1,
+      "books": [
+        "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy",
+        "Joshua", "Judges", "I Samuel", "II Samuel", "I Kings", "II Kings",
+        "Isaiah", "Jeremiah", "Ezekiel",
+        "Hosea", "Joel", "Amos", "Obadiah", "Jonah", "Micah", "Nahum", "Habakkuk", "Zephaniah", "Haggai", "Zechariah", "Malachi",
+        "Psalms", "Proverbs", "Job",
+        "Song of Songs", "Ruth", "Lamentations", "Ecclesiastes", "Esther",
+        "Daniel", "Ezra", "Nehemiah", "I Chronicles", "II Chronicles"
+      ],
+      "total_verses": 23206,
+      "language": "hebrew",
+      "has_english": true,
+      "has_commentary": true,
+      "format": "verse_by_verse"
+    },
+    "Mishnah": {
+      "priority": 1,
+      "books": [
+        "Berakhot", "Peah", "Demai", "Kilayim", "Sheviit", "Terumot", "Maasrot", "Maaser Sheni", "Hallah", "Orlah", "Bikkurim",
+        "Shabbat", "Eruvin", "Pesahim", "Shekalim", "Yoma", "Sukkah", "Beitzah", "Rosh Hashanah", "Taanit", "Megillah", "Moed Katan", "Hagigah",
+        "Yevamot", "Ketubot", "Nedarim", "Nazir", "Sotah", "Gittin", "Kiddushin",
+        "Bava Kamma", "Bava Metzia", "Bava Batra", "Sanhedrin", "Makkot", "Shevuot", "Eduyot", "Avodah Zarah", "Avot", "Horayot",
+        "Zevahim", "Menahot", "Hullin", "Bekhorot", "Arakhin", "Temurah", "Keritot", "Meilah", "Tamid", "Middot", "Kinnim",
+        "Kelim", "Oholot", "Negaim", "Parah", "Tahorot", "Mikvaot", "Niddah", "Makhshirin", "Zavim", "Tevul Yom", "Yadayim", "Oktzin"
+      ],
+      "total_chapters": 523,
+      "language": "hebrew",
+      "has_english": true,
+      "format": "mishna_by_mishna"
+    },
+    "Tosefta": {
+      "priority": 2,
+      "books": [
+        "Tosefta Berakhot", "Tosefta Peah", "Tosefta Demai", "Tosefta Kilayim", "Tosefta Sheviit", "Tosefta Terumot",
+        "Tosefta Shabbat", "Tosefta Eruvin", "Tosefta Pesahim", "Tosefta Yoma", "Tosefta Sukkah", "Tosefta Beitzah", "Tosefta Rosh Hashanah", "Tosefta Taanit", "Tosefta Megillah", "Tosefta Hagigah",
+        "Tosefta Yevamot", "Tosefta Ketubot", "Tosefta Nedarim", "Tosefta Nazir", "Tosefta Sotah", "Tosefta Gittin", "Tosefta Kiddushin",
+        "Tosefta Bava Kamma", "Tosefta Bava Metzia", "Tosefta Bava Batra", "Tosefta Sanhedrin", "Tosefta Makkot", "Tosefta Shevuot",
+        "Tosefta Zevahim", "Tosefta Menahot", "Tosefta Hullin", "Tosefta Bekhorot",
+        "Tosefta Kelim", "Tosefta Oholot", "Tosefta Negaim", "Tosefta Parah", "Tosefta Tahorot", "Tosefta Mikvaot", "Tosefta Niddah", "Tosefta Makhshirin"
+      ],
+      "language": "hebrew",
+      "has_english": false,
+      "format": "paragraph"
+    },
+    "Talmud_Bavli": {
+      "priority": 1,
+      "books": [
+        "Berakhot", "Shabbat", "Eruvin", "Pesahim", "Shekalim", "Yoma", "Sukkah", "Beitzah", "Rosh Hashanah", "Taanit", "Megillah", "Moed Katan", "Hagigah",
+        "Yevamot", "Ketubot", "Nedarim", "Nazir", "Sotah", "Gittin", "Kiddushin",
+        "Bava Kamma", "Bava Metzia", "Bava Batra", "Sanhedrin", "Makkot", "Shevuot", "Avodah Zarah", "Horayot", "Zevahim", "Menahot", "Hullin", "Bekhorot", "Arakhin", "Temurah", "Keritot", "Meilah", "Niddah",
+        "Berakhot"
+      ],
+      "total_pages": 2700,
+      "language": "aramaic_hebrew",
+      "has_english": true,
+      "format": "daf_amud"
+    },
+    "Talmud_Yerushalmi": {
+      "priority": 2,
+      "books": [
+        "Berakhot", "Peah", "Demai", "Kilayim", "Sheviit", "Terumot", "Maasrot", "Hallah", "Orlah", "Bikkurim",
+        "Shabbat", "Eruvin", "Pesahim", "Shekalim", "Yoma", "Sukkah", "Beitzah", "Rosh Hashanah", "Taanit", "Megillah", "Moed Katan", "Hagigah",
+        "Yevamot", "Ketubot", "Nedarim", "Nazir", "Sotah", "Gittin", "Kiddushin",
+        "Bava Kamma", "Bava Metzia", "Bava Batra", "Sanhedrin", "Shevuot", "Avodah Zarah", "Horayot",
+        "Zevahim", "Menahot", "Hullin", "Bekhorot", "Arakhin", "Temurah"
+      ],
+      "language": "aramaic_hebrew",
+      "has_english": true,
+      "format": "chapter_halacha"
+    },
+    "Midrash_Rabbah": {
+      "priority": 2,
+      "books": [
+        "Bereshit Rabbah", "Shemot Rabbah", "Vayikra Rabbah", "Bamidbar Rabbah", "Devarim Rabbah",
+        "Shir HaShirim Rabbah", "Ruth Rabbah", "Eichah Rabbah", "Kohelet Rabbah", "Esther Rabbah"
+      ],
+      "language": "aramaic_hebrew",
+      "has_english": true,
+      "format": "chapter_parasha"
+    },
+    "Tanchuma": {
+      "priority": 2,
+      "books": [
+        "Midrash Tanchuma", "Tanchuma (Buber)"
+      ],
+      "language": "hebrew",
+      "has_english": true,
+      "format": "parasha"
+    },
+    "Yalkut_Shimoni": {
+      "priority": 3,
+      "books": [
+        "Yalkut Shimoni on Torah", "Yalkut Shimoni on Neviim", "Yalkut Shimoni on Ketuvim"
+      ],
+      "language": "hebrew",
+      "has_english": false,
+      "format": "remez"
+    },
+    "Zohar": {
+      "priority": 1,
+      "books": [
+        "Zohar", "Zohar Chadash"
+      ],
+      "language": "aramaic",
+      "has_english": true,
+      "format": "section_parasha",
+      "notes": "Critical for Kabbalah layer. Soul Root Graph restricted to this and Arizal only."
+    },
+    "Tikkunei_Zohar": {
+      "priority": 2,
+      "books": [
+        "Tikkunei Zohar"
+      ],
+      "language": "aramaic",
+      "has_english": true,
+      "format": "tikkun"
+    },
+    "Lurianic_Kabbalah": {
+      "priority": 1,
+      "books": [
+        "Etz Chaim", "Pri Etz Chaim", "Shaar HaKavanot", "Shaar HaGilgulim",
+        "Likutei Torah", "Sefer HaLikutim", "Sefer HaKavanot"
+      ],
+      "language": "hebrew",
+      "has_english": true,
+      "format": "shaar_chapter",
+      "notes": "CRITICAL: Soul Root Graph sources. Only Arizal and Rashash/Vilna Gaon permitted."
+    },
+    "Rashash": {
+      "priority": 2,
+      "books": [
+        "Siddur HaRashash"
+      ],
+      "language": "hebrew",
+      "has_english": false,
+      "format": "siddur_section",
+      "notes": "Authoritative for Soul Root Graph."
+    },
+    "Chassidut": {
+      "priority": 2,
+      "books": [
+        "Tanya", "Likutei Moharan", "Likutei Halakhot", "Sichot HaRan",
+        "Sefer HaMiddot", "Sefat Emet", "Netivot Shalom", "Kedushat Levi",
+        "Noam Elimelech", "Ketzot HaChoshen", "Shem Mishmuel", "Sfas Emes"
+      ],
+      "language": "hebrew",
+      "has_english": true,
+      "format": "chapter_section"
+    },
+    "Shulchan_Aruch": {
+      "priority": 1,
+      "books": [
+        "Shulchan Arukh, Orach Chayim", "Shulchan Arukh, Yoreh De'ah",
+        "Shulchan Arukh, Even HaEzer", "Shulchan Arukh, Choshen Mishpat"
+      ],
+      "language": "hebrew",
+      "has_english": true,
+      "format": "siman_seif"
+    },
+    "Rambam_Mishneh_Torah": {
+      "priority": 1,
+      "books": [
+        "Mishneh Torah, Introduction",
+        "Mishneh Torah, Sefer HaMadda",
+        "Mishneh Torah, Sefer Ahavah",
+        "Mishneh Torah, Sefer Zemanim",
+        "Mishneh Torah, Sefer Nashim",
+        "Mishneh Torah, Sefer Kedushah",
+        "Mishneh Torah, Sefer Haflaah",
+        "Mishneh Torah, Sefer Zera'im",
+        "Mishneh Torah, Sefer Avodah",
+        "Mishneh Torah, Sefer Korbanot",
+        "Mishneh Torah, Sefer Taharah",
+        "Mishneh Torah, Sefer Nezikin",
+        "Mishneh Torah, Sefer Kinyan",
+        "Mishneh Torah, Sefer Mishpatim",
+        "Mishneh Torah, Sefer Shoftim"
+      ],
+      "language": "hebrew",
+      "has_english": true,
+      "format": "halacha"
+    },
+    "Major_Commentaries_Tanakh": {
+      "priority": 1,
+      "books": [
+        "Rashi on Genesis", "Rashi on Exodus", "Rashi on Leviticus", "Rashi on Numbers", "Rashi on Deuteronomy",
+        "Ramban on Genesis", "Ramban on Exodus", "Ramban on Leviticus", "Ramban on Numbers", "Ramban on Deuteronomy",
+        "Ibn Ezra on Genesis", "Ibn Ezra on Exodus", "Ibn Ezra on Leviticus", "Ibn Ezra on Numbers", "Ibn Ezra on Deuteronomy",
+        "Rashbam on Genesis", "Rashbam on Exodus", "Rashbam on Leviticus", "Rashbam on Numbers", "Rashbam on Deuteronomy",
+        "Sforno on Genesis", "Sforno on Exodus", "Sforno on Leviticus", "Sforno on Numbers", "Sforno on Deuteronomy",
+        "Abarbanel on Torah"
+      ],
+      "language": "hebrew",
+      "has_english": true,
+      "format": "verse_commentary"
+    },
+    "Talmud_Commentaries": {
+      "priority": 2,
+      "books": [
+        "Rashi on Berakhot", "Rashi on Shabbat", "Rashi on Eruvin", "Rashi on Pesahim",
+        "Tosafot on Berakhot", "Tosafot on Shabbat", "Tosafot on Eruvin", "Tosafot on Pesahim",
+        "Ramban on Berakhot", "Rashba on Berakhot", "Ritva on Berakhot",
+        "Maharsha on Berakhot", "Maharsha on Shabbat"
+      ],
+      "language": "hebrew",
+      "has_english": false,
+      "format": "daf_commentary"
+    },
+    "Musar": {
+      "priority": 2,
+      "books": [
+        "Mesilat Yesharim", "Shaarei Teshuvah", "Chovot HaLevavot",
+        "Orchot Tzaddikim", "Sefer HaYashar", "Sefer HaChinuch",
+        "Iggeret HaRamban", "Iggeret HaGRA", "Madreigat HaAdam"
+      ],
+      "language": "hebrew",
+      "has_english": true,
+      "format": "chapter"
+    }
+  },
+  "extraction_plan": {
+    "phase_1": {
+      "description": "Foundational texts — highest priority",
+      "books": ["Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Psalms", "Proverbs", "Job", "Zohar", "Tanya"],
+      "estimated_size_mb": 150,
+      "estimated_time_hours": 6
+    },
+    "phase_2": {
+      "description": "Nevi'im and Ketuvim",
+      "books": ["Joshua", "Judges", "Isaiah", "Jeremiah", "Ezekiel", "All Twelve Minor Prophets", "Daniel", "Ezra", "Nehemiah", "Chronicles"],
+      "estimated_size_mb": 100,
+      "estimated_time_hours": 4
+    },
+    "phase_3": {
+      "description": "Mishnah and Talmud Bavli core tractates",
+      "books": ["Berakhot", "Shabbat", "Pesahim", "Yoma", "Sukkah", "Sanhedrin", "Gittin", "Kiddushin", "Bava Kamma", "Bava Metzia", "Bava Batra"],
+      "estimated_size_mb": 800,
+      "estimated_time_hours": 20
+    },
+    "phase_4": {
+      "description": "Halachic codes",
+      "books": ["Shulchan Arukh, Orach Chayim", "Shulchan Arukh, Yoreh De'ah", "Rambam Mishneh Torah"],
+      "estimated_size_mb": 300,
+      "estimated_time_hours": 8
+    },
+    "phase_5": {
+      "description": "Kabbalah and Chassidut",
+      "books": ["Etz Chaim", "Tikkunei Zohar", "Likutei Moharan", "Likutei Torah", "Shaar HaKavanot"],
+      "estimated_size_mb": 200,
+      "estimated_time_hours": 5
+    },
+    "phase_6": {
+      "description": "Commentaries",
+      "books": ["Rashi on Genesis", "Ramban on Genesis", "Ibn Ezra on Genesis", "Sforno on Genesis"],
+      "estimated_size_mb": 100,
+      "estimated_time_hours": 3
+    },
+    "phase_7": {
+      "description": "Remaining texts",
+      "books": ["All remaining tractates", "Midrash Rabbah", "Tanchuma", "Musar literature"],
+      "estimated_size_mb": 500,
+      "estimated_time_hours": 15
+    }
+  }
+}

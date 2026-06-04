@@ -1,0 +1,7 @@
+# Phase 1: Torah Books (Highest Priority)
+# The Five Books of Moses
+Genesis
+Exodus
+Leviticus
+Numbers
+Deuteronomy

@@ -1,0 +1,31 @@
+# Phase 4: Mishnah Core Tractates
+Berakhot
+Shabbat
+Eruvin
+Pesahim
+Yoma
+Sukkah
+Beitzah
+Rosh Hashanah
+Taanit
+Megillah
+Moed Katan
+Hagigah
+Yevamot
+Ketubot
+Nedarim
+Nazir
+Sotah
+Gittin
+Kiddushin
+Bava Kamma
+Bava Metzia
+Bava Batra
+Sanhedrin
+Makkot
+Shevuot
+Avodah Zarah
+Zevahim
+Menahot
+Hullin
+Bekhorot
