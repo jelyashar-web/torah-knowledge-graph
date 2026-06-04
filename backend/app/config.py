@@ -44,11 +44,20 @@ class Settings(BaseSettings):
     max_graph_nodes_return: int = 1000
 
     # AI / Embeddings
+    ai_provider: str = "ollama"  # ollama | claude | openrouter | openai
     ai_model_default: str = "claude-sonnet-4-6"
     anthropic_api_key: str = ""
     openai_api_key: str = ""
+    openrouter_api_key: str = ""
     embedding_model: str = "text-embedding-3-large"
     embedding_dimensions: int = 3072
+
+    # Provider-specific model selection
+    claude_model: str = "claude-sonnet-4-6-20251001"
+    openrouter_model: str = "anthropic/claude-sonnet-4-6"
+    openai_model: str = "gpt-4o"
+    ollama_model: str = "llama3.2"
+    ollama_base_url: str = "http://localhost:11434"
 
     @property
     def cors_origins_list(self) -> list[str]:

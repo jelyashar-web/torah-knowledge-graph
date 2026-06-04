@@ -10,7 +10,7 @@ from app.celery_app import celery_app  # noqa: F401
 from app.config import settings
 from app.neo4j_client import init_schema as init_neo4j_schema
 from app.qdrant_client import init_collection as init_qdrant_collection
-from app.routers import graph, health, ingest, search
+from app.routers import discover, graph, health, ingest, search
 
 logger = structlog.get_logger()
 
@@ -38,6 +38,7 @@ app.include_router(health.router)
 app.include_router(ingest.router)
 app.include_router(search.router)
 app.include_router(graph.router)
+app.include_router(discover.router)
 
 
 @app.on_event("startup")
