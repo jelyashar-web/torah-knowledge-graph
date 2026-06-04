@@ -27,11 +27,12 @@ This is **not** a RAG system. **Not** a search engine. **Not** a chatbot. It is 
 | **5 — Talmud Bavli** | 37 tractates | 0/37 | 📋 Planned |
 | **6 — Kabbalah** | Zohar, Tikkunei Zohar, etc. | 0/? | 📋 Planned |
 | **7 — Halacha** | Shulchan Aruch, Rambam, etc. | 0/? | 📋 Planned |
+| **8 — Local Library** | ~1,500 DOCX books (Chassidut, Mussar, Halacha, Parasha) | 1,441/1,548 parsed | ✅ In Graph |
 
 > **Last updated:** 2026-06-04  
-> **Source:** Sefaria.org API (1 req/sec rate limit)  
-> **Format:** Hebrew + English, verse-level JSON → Neo4j JSONL  
-> **Total:** 39 Tanakh books | ~75 MB raw | ~38 MB processed JSONL
+> **Source:** Sefaria.org API (1 req/sec rate limit) + Local DOCX library  
+> **Format:** Hebrew + English, verse-level JSON → Neo4j JSONL + TextUnit JSONL  
+> **Total:** 39 Tanakh books + 1,441 DOCX books | ~75 MB raw + ~461 MB DOCX | ~1.4M nodes in graph
 
 ---
 

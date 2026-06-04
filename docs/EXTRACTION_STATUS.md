@@ -121,6 +121,32 @@ uv run python scripts/transform_for_neo4j.py --input data/raw/Genesis.json --out
 
 ---
 
+## Phase 8 — Local DOCX Library (1,548 files)
+
+| Metric | Value |
+|--------|-------|
+| **Total DOCX files found** | 1,548 |
+| **Successfully parsed** | 1,441 (93%) |
+| **Failed / Empty** | 107 (7%) |
+| **Total TextUnit nodes** | 1,419,463 |
+| **Total relationships** | 2,849,900 (PART_OF + NEXT + SOURCE_FILE) |
+| **Parse speed** | 13.7 files/sec |
+| **Total parse time** | ~113 seconds |
+| **Library size** | 461 MB |
+
+**Categories covered:**
+- פרשת שבוע (Weekly Torah portions)
+- עיונים בהלכה ובשס (Halacha & Talmud essays)
+- הדרך לתורה (Torah thought / Chassidut)
+- And more...
+
+**Pipeline used:** `scripts/bulk_import_production.py`
+- Parallel parsing (4 workers via ProcessPoolExecutor)
+- SHA-256 manifest for resume support
+- Inline validation (filters empty/non-Hebrew units)
+- Hebrew text normalization via `hebrew_utils.py`
+- Heading detection: פרק, סימן, סעיף, הלכה, משנה, דף, עמוד, שער, דרוש, אות
+
 ## Next Phases (Planned)
 
 | Phase | Books | Status |
