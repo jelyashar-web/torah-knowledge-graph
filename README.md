@@ -16,6 +16,24 @@ This is **not** a RAG system. **Not** a search engine. **Not** a chatbot. It is 
 
 ---
 
+## Extraction Progress
+
+| Phase | Books | Extracted | Status |
+|-------|-------|-----------|--------|
+| **1 — Torah** | Genesis, Exodus, Leviticus, Numbers, Deuteronomy | 5/5 | ✅ Complete |
+| **2 — Nevi'im** | Joshua, Judges, I Samuel, II Samuel, I Kings, II Kings, Isaiah, Jeremiah, Ezekiel, Hosea, Joel, Amos, Obadiah, Jonah, Micah, Nahum, Habakkuk, Zephaniah, Haggai, Zechariah, Malachi | 0/21 | ⏳ In Progress |
+| **3 — Ketuvim** | Psalms, Proverbs, Job, Song of Songs, Ruth, Lamentations, Ecclesiastes, Esther, Daniel, Ezra, Nehemiah, I Chronicles, II Chronicles | 3/13 | 🔄 Partial |
+| **4 — Mishnah** | 63 tractates | 0/63 | 📋 Planned |
+| **5 — Talmud Bavli** | 37 tractates | 0/37 | 📋 Planned |
+| **6 — Kabbalah** | Zohar, Tikkunei Zohar, etc. | 0/? | 📋 Planned |
+| **7 — Halacha** | Shulchan Aruch, Rambam, etc. | 0/? | 📋 Planned |
+
+> **Last updated:** 2026-06-04  
+> **Source:** Sefaria.org API (1 req/sec rate limit)  
+> **Format:** Hebrew + English, verse-level JSON → Neo4j JSONL
+
+---
+
 ## System Architecture
 
 ```
@@ -111,24 +129,33 @@ torah-knowledge-graph/
 
 ## Quick Start
 
+### Current Working Pipeline (Data Extraction)
+
 ```bash
-# Start all services
-docker-compose up -d
+# Extract a single book from Sefaria
+uv run python scripts/sefaria_extractor.py --book Genesis --output data/raw/
 
-# Verify health
-curl http://localhost:8000/health
-curl http://localhost:7474
-curl http://localhost:6333/healthz
+# Extract multiple books via batch
+uv run python scripts/batch_extract.py --books Genesis Exodus Leviticus --output data/
 
-# Deploy Neo4j schema
-cypher-shell -u neo4j -p password < databases/neo4j/schema.cypher
+# Extract from a phase manifest
+uv run python scripts/batch_extract.py --phase-file data/manifests/phase1_torah.txt --output data/
 
-# Run PostgreSQL migrations
-alembic upgrade head
-
-# Start frontend dev server
-cd frontend && npm run dev
+# Transform raw JSON to Neo4j JSONL
+uv run python scripts/transform_for_neo4j.py --input data/raw/Genesis.json --output data/processed/
 ```
+
+### Infrastructure (Databases Only)
+
+```bash
+# Start databases (Neo4j, PostgreSQL, Qdrant, Redis)
+docker-compose up -d neo4j postgres qdrant redis
+
+# Neo4j Browser: http://localhost:7474
+#   User: neo4j | Password: torah-graph-secure
+```
+
+> **Note:** Backend (`backend/`), frontend (`frontend/`), and worker services in `docker-compose.yml` currently have **empty build contexts** and will fail to start. Only database services are runnable today.
 
 ---
 
@@ -141,6 +168,7 @@ cd frontend && npm run dev
 | `architecture/API_SPECIFICATION.md` | 50+ REST endpoints, WebSocket protocol, OpenAPI-style schemas |
 | `databases/POSTGRESQL_SCHEMA.md` | 8 tables: users, sources, texts, jobs, audit, AI metadata, confidence, API logs |
 | `databases/QDRANT_SCHEMA.md` | 2 vector collections (torah_texts, torah_entities), 768-dim Cosine, HNSW |
+| `docs/EXTRACTION_STATUS.md` | Current extraction progress, pipeline docs, node/relationship schemas |
 | `docs/IMPLEMENTATION_ROADMAP.md` | 7 phases over 20 weeks with milestone gates |
 | `docs/FOLDER_STRUCTURE.md` | Complete frontend/backend/ETL/AI/infrastructure folder hierarchy |
 | `etl/ETL_DESIGN.md` | Sefaria API ingestion, bulk export loading, open dataset adapters |
@@ -159,6 +187,70 @@ cd frontend && npm run dev
 | `ontology/v3/ONTOLOGY_V3.md` | Meta-ontological layer: 100% clean |
 
 ---
+
+## Ingestion Flow (Current Working Pipeline)
+
+**Stage 1 — Extract:**
+```
+uv run python scripts/batch_extract.py --phase-file data/manifests/phase1_torah.txt --output data/
+    │
+    ├─ sefaria_extractor.py → fetch index → total_refs=N
+    │   for chapter in 1..N:
+    │       sleep 1.1s → GET /texts/Genesis%20{chapter}?lang=he
+    │       sleep 1.1s → GET /texts/Genesis%20{chapter}?lang=en
+    │   save → data/raw/Genesis.json
+    │
+    └─ transform_for_neo4j.py → parse verses → typed nodes
+        save → data/processed/Genesis_nodes.jsonl
+        save → data/processed/Genesis_relationships.jsonl
+```
+
+**Stage 2 — Load into Neo4j (manual):**
+```bash
+# Use Cypher UNWIND or neo4j-admin import
+python scripts/load_jsonl_to_neo4j.py --nodes data/processed/Genesis_nodes.jsonl --relationships data/processed/Genesis_relationships.jsonl
+```
+
+> **Future:** The full FastAPI → PostgreSQL → Celery pipeline is planned for Phase 3 (see `docs/IMPLEMENTATION_ROADMAP.md`). Today, extraction runs directly via Python scripts.
+
+## Search Flow
+
+```
+GET /api/v1/search/fulltext?q=בראשית
+    → Neo4j Full-Text Index (verseHebrewText)
+    → RETURN verse, score
+
+GET /api/v1/search/semantic?q=creation+of+the+world
+    → OpenAI embedding(query)
+    → Qdrant cosine similarity search
+    → MATCH (v:Verse {id: payload.neo4j_node_id}) RETURN v
+
+GET /api/v1/search/hybrid?q=light+on+first+day
+    → Fulltext results + rank
+    → Semantic results + rank
+    → RRF (Reciprocal Rank Fusion): score = Σ 1/(k + rank)
+    → Merge, deduplicate, rerank, return top-k
+```
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+| Variable | Required | Default | Purpose |
+|----------|----------|---------|---------|
+| `NEO4J_PASSWORD` | Yes | `torah-graph-secure` | Neo4j auth |
+| `POSTGRES_PASSWORD` | Yes | `tkg-postgres-secure` | PostgreSQL auth |
+| `JWT_SECRET` | Yes | `change-me...` | JWT signing |
+| `OPENAI_API_KEY` | No | — | Embeddings for semantic search |
+| `ANTHROPIC_API_KEY` | No | — | AI extraction (future) |
+| `CORS_ORIGINS` | No | `localhost:3000` | Frontend origins |
+
+## Hebrew Text Handling
+
+- **Encoding:** Always UTF-8. Never normalize Hebrew spelling.
+- **Cantillation:** Preserved when available from Sefaria.
+- **RTL:** First-class in frontend (planned). API returns raw Hebrew text.
+- **Search:** Neo4j full-text indexes treat cantillation as token boundaries. For pure Hebrew search, clients may strip cantillation before querying.
 
 ## 7-Phase Implementation Roadmap
 

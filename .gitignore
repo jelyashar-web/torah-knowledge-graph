@@ -57,3 +57,7 @@ temp/
 
 # OS files
 Thumbs.db
+
+# Project-specific
+crush.md
+MEMORY/

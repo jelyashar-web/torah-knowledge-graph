@@ -1,0 +1,50 @@
+# Torah Knowledge Graph Backend
+# Generated for uv / pip compatibility
+
+# Web Framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# Data Validation
+pydantic==2.9.0
+pydantic-settings==2.6.0
+email-validator==2.2.0
+
+# Database
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+psycopg2-binary==2.9.10
+alembic==1.14.0
+
+# Graph Database
+neo4j==5.26.0
+
+# Vector Database
+qdrant-client==1.12.0
+
+# Message Broker / Cache
+celery==5.4.0
+redis==5.2.0
+
+# Search / ML
+openai==1.54.0
+
+# Monitoring / Observability
+structlog==24.4.0
+prometheus-client==0.21.0
+starlette-prometheus==0.10.0
+
+# Security
+python-jose[cryptography]==3.3.0
+passlib[argon2]==1.7.4
+python-multipart==0.0.17
+
+# Utilities
+httpx==0.27.0
+python-dotenv==1.0.0
+orjson==3.10.0
+
+# Testing
+pytest==8.3.0
+pytest-asyncio==0.24.0
+httpx==0.27.0
