@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST || "http://localhost:11434";
-const KIMI_BASE = process.env.KIMI_BASE_URL || "https://platform.kimi.ai/v1";
+const KIMI_BASE = process.env.KIMI_BASE_URL || "https://api.moonshot.cn/v1";
 const KIMI_KEY = process.env.KIMI_API_KEY || "";
 
 export async function POST(req: NextRequest) {
