@@ -1,0 +1,45 @@
+{
+  "dashboard": {
+    "title": "Torah Knowledge Graph — System Overview",
+    "tags": ["tkg", "enterprise"],
+    "timezone": "Asia/Jerusalem",
+    "panels": [
+      {
+        "title": "Neo4j Nodes",
+        "type": "stat",
+        "targets": [{"expr": "neo4j_database_pooled_total_active_transaction_count"}],
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "title": "API Requests/sec",
+        "type": "graph",
+        "targets": [{"expr": "rate(http_requests_total[1m])"}],
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+      },
+      {
+        "title": "Graph Query Latency",
+        "type": "heatmap",
+        "targets": [{"expr": "histogram_quantile(0.95, rate(graph_query_duration_seconds_bucket[5m]))"}],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+      },
+      {
+        "title": "AI Chat Tokens/min",
+        "type": "stat",
+        "targets": [{"expr": "ai_chat_tokens_total"}],
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
+      },
+      {
+        "title": "Database Connections",
+        "type": "graph",
+        "targets": [{"expr": "pg_stat_activity_count"}],
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 4}
+      },
+      {
+        "title": "Redis Memory Usage",
+        "type": "graph",
+        "targets": [{"expr": "redis_memory_used_bytes"}],
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 4}
+      }
+    ]
+  }
+}

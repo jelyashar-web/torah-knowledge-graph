@@ -8,8 +8,11 @@ import { AIChat } from "@/components/AIChat";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { searchVerses, listBooks } from "@/lib/api";
 import { Book, Network, Database, BarChart3, MessageSquare, ChevronRight } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useI18n } from "@/components/I18nProvider";
 
 export default function Home() {
+  const { t, locale, setLocale } = useI18n();
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
@@ -61,26 +64,50 @@ export default function Home() {
                   Torah Knowledge Graph
                 </h1>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  גרף ידע תורני חי — 1.4M+ nodes | Ollama AI
+                  Enterprise Graph-Native Torah Platform — 1.4M+ nodes | AI Chat | Real-time
                 </p>
               </div>
             </div>
 
-            <div className="flex gap-1">
-              {tabs.map((tab) => (
+            <div className="flex items-center gap-3">
+              {/* Language Toggle */}
+              <div className="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    activeTab === tab.id
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
+                  onClick={() => setLocale("he")}
+                  className={`px-2 py-1 rounded-md text-xs font-bold transition-all ${
+                    locale === "he" ? "bg-white dark:bg-slate-600 shadow-sm" : "text-slate-500"
                   }`}
                 >
-                  <tab.icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
+                  עברית
                 </button>
-              ))}
+                <button
+                  onClick={() => setLocale("en")}
+                  className={`px-2 py-1 rounded-md text-xs font-bold transition-all ${
+                    locale === "en" ? "bg-white dark:bg-slate-600 shadow-sm" : "text-slate-500"
+                  }`}
+                >
+                  EN
+                </button>
+              </div>
+
+              <ThemeToggle />
+
+              <div className="flex gap-1">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                      activeTab === tab.id
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
+                    }`}
+                  >
+                    <tab.icon className="w-4 h-4" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
