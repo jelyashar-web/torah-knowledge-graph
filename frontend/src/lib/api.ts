@@ -7,9 +7,6 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const NEO4J_HTTP = "http://localhost:7475/db/neo4j/tx/commit";
 const NEO4J_USER = "neo4j";
 const NEO4J_PASS = "torah-graph-secure";
-const OLLAMA_GENERATE = "http://localhost:11434/api/generate";
-const OLLAMA_CHAT = "http://localhost:11434/api/chat";
-
 // ── Interfaces ──────────────────────────────────────────
 
 export interface VerseResult {
@@ -171,7 +168,6 @@ export async function getBookStructure(book: string): Promise<any> {
 export async function chatWithOllama(message: string, context: string = ""): Promise<string> {
   const systemPrompt = `You are a Torah scholar AI. Answer questions about Jewish texts, Hebrew Bible, and Jewish law. Always cite sources (book, chapter, verse). Answer in Hebrew or English as appropriate. Be thorough and accurate.`;
 
-  // Build messages array for chat API
   const messages: Array<{ role: string; content: string }> = [
     { role: "system", content: systemPrompt },
   ];
@@ -182,45 +178,24 @@ export async function chatWithOllama(message: string, context: string = ""): Pro
   messages.push({ role: "user", content: message });
 
   try {
-    // Try /api/chat first (modern Ollama)
-    const res = await fetch(OLLAMA_CHAT, {
+    // Call local Next.js API proxy (avoids CORS)
+    const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "llama3.2",
-        messages,
-        stream: false,
-      }),
+      body: JSON.stringify({ messages, model: "llama3.1:8b" }),
       signal: AbortSignal.timeout(30000),
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      return data.message?.content || data.response || "No response";
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || `HTTP ${res.status}`);
     }
 
-    // Fallback to /api/generate (older Ollama)
-    const prompt = `${systemPrompt}\n\nUser: ${message}\n\nAssistant:`;
-    const res2 = await fetch(OLLAMA_GENERATE, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "llama3.2",
-        prompt,
-        stream: false,
-      }),
-      signal: AbortSignal.timeout(30000),
-    });
-
-    if (res2.ok) {
-      const data = await res2.json();
-      return data.response || "No response from Ollama";
-    }
-
-    throw new Error(`Ollama HTTP ${res.status} (chat) / ${res2.status} (generate)`);
+    const data = await res.json();
+    return data.response || "No response";
   } catch (e: any) {
     console.error("Ollama error:", e);
-    return "⚠️ Ollama is not available. Make sure Ollama is running: `ollama serve`\n\nOr install: curl -fsSL https://ollama.com/install.sh | sh";
+    return "⚠️ Ollama is not available. Make sure Ollama is running: `ollama serve`";
   }
 }
 
