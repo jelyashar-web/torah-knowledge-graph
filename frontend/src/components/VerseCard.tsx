@@ -109,9 +109,9 @@ export function VerseCard({ verse }: VerseCardProps) {
                 קישורים צולבים
               </h4>
               <div className="space-y-2">
-                {crossRefs.matches.map((match: any) => (
+                {crossRefs.matches.map((match: any, idx: number) => (
                   <div
-                    key={match.ref}
+                    key={`${match.ref || "ref"}-${idx}`}
                     className="p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg text-sm"
                     dir="rtl"
                   >

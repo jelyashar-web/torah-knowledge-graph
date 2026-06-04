@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import { VerseCard } from "@/components/VerseCard";
-import { GraphView } from "@/components/GraphView";
+import { AdvancedGraphExplorer } from "@/components/AdvancedGraphExplorer";
 import { OllamaChat } from "@/components/OllamaChat";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { searchVerses, listBooks } from "@/lib/api";
@@ -156,16 +156,8 @@ export default function Home() {
         )}
 
         {activeTab === "graph" && (
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
-              <h2 className="text-xl font-bold mb-4 text-slate-900 dark:text-white">
-                ויזואליזציית גרף אינטראקטיבית
-              </h2>
-              <p className="text-slate-600 dark:text-slate-400 mb-4">
-                גרף של ספרים, פרקים, פסוקים וישויות. גרור, זום, ולחץ על נודים לחקירה.
-              </p>
-              <GraphView />
-            </div>
+          <div className="h-[calc(100vh-200px)]">
+            <AdvancedGraphExplorer />
           </div>
         )}
 
