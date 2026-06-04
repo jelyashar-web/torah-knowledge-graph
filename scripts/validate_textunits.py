@@ -49,7 +49,7 @@ def validate_nodes(nodes_file: Path) -> dict:
     seen_ids = set()
     duplicate_ids = []
 
-    with open(nodes_file, "r", encoding="utf-8") as f:
+    with open(nodes_file, "r", encoding="utf-8", errors="replace") as f:
         for line_no, line in enumerate(f, 1):
             line = line.strip()
             if not line:
@@ -114,7 +114,7 @@ def validate_relationships(rels_file: Path, node_ids: set) -> dict:
     dangling_from = 0
     dangling_to = 0
 
-    with open(rels_file, "r", encoding="utf-8") as f:
+    with open(rels_file, "r", encoding="utf-8", errors="replace") as f:
         for line_no, line in enumerate(f, 1):
             line = line.strip()
             if not line:
@@ -172,7 +172,7 @@ def validate_collection(data_dir: Path) -> dict:
         total_warnings += len(result["warnings"])
 
         # Collect IDs for relationship validation
-        with open(nodes_file, "r", encoding="utf-8") as f:
+        with open(nodes_file, "r", encoding="utf-8", errors="replace") as f:
             for line in f:
                 line = line.strip()
                 if not line:
