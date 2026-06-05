@@ -231,6 +231,94 @@ export async function chatWithOllama(message: string, context: string = ""): Pro
   return result.response;
 }
 
+// ── People ────────────────────────────────────────────
+
+export async function listPeople(): Promise<{ people: any[] }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/graph/people`, { signal: AbortSignal.timeout(5000) });
+    if (res.ok) return await res.json();
+  } catch {}
+
+  // Fallback to direct Neo4j
+  const cypher = `
+    MATCH (p:Person)
+    OPTIONAL MATCH (p)<-[:MENTIONS]-(v:Verse)
+    WITH p, count(v) AS verse_count
+    RETURN p {.*} AS person, verse_count
+    ORDER BY p.name
+    LIMIT 200
+  `;
+  const rows = await queryNeo4j(cypher);
+  return {
+    people: rows.map((r: any) => ({ ...r.person, verses: r.verse_count })),
+  };
+}
+
+export async function getPerson(ref: string): Promise<any> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/graph/people/${ref}`, { signal: AbortSignal.timeout(5000) });
+    if (res.ok) return await res.json();
+  } catch {}
+
+  const cypher = `
+    MATCH (p:Person {ref: $ref})
+    OPTIONAL MATCH (p)<-[:MENTIONS]-(v:Verse)
+    RETURN p {.*} AS person, count(v) AS verse_count
+  `;
+  const rows = await queryNeo4j(cypher, { ref });
+  return rows[0]?.person || null;
+}
+
+export async function getSubgraph(centerRef: string, depth: number = 2, limit: number = 100): Promise<any> {
+  try {
+    const params = new URLSearchParams({ center_ref: centerRef, depth: String(depth), limit: String(limit) });
+    const res = await fetch(`${API_BASE}/api/v1/graph/subgraph?${params}`, { signal: AbortSignal.timeout(10000) });
+    if (res.ok) return await res.json();
+  } catch {}
+
+  // Direct Neo4j fallback
+  const cypher = `
+    MATCH path = (center)-[r*1..${depth}]-(neighbor)
+    WHERE (center:Verse AND center.ref = $ref)
+       OR (center:Person AND center.ref = $ref)
+    RETURN DISTINCT
+      center {.*, label: center.ref, type: labels(center)[0]} AS center_node,
+      neighbor {.*, label: COALESCE(neighbor.ref, neighbor.name, neighbor.title), type: labels(neighbor)[0]} AS neighbor_node,
+      [rel IN r | type(rel)] AS rel_types
+    LIMIT ${limit}
+  `;
+  const rows = await queryNeo4j(cypher, { ref: centerRef });
+  const nodes: Record<string, any> = {};
+  const edges: any[] = [];
+
+  for (const r of rows) {
+    const c = r.center_node;
+    const n = r.neighbor_node;
+    for (const node of [c, n]) {
+      if (node?.ref && !nodes[node.ref]) {
+        nodes[node.ref] = {
+          id: node.ref,
+          label: node.label || node.ref,
+          type: node.type || "Unknown",
+          ...node,
+        };
+      }
+    }
+    if (r.rel_types?.length) {
+      edges.push({ type: r.rel_types[0], from_id: c?.ref, to_id: n?.ref });
+    }
+  }
+
+  return {
+    center: centerRef,
+    depth,
+    nodes: Object.values(nodes),
+    edges,
+    node_count: Object.keys(nodes).length,
+    edge_count: edges.length,
+  };
+}
+
 // ── Analytics ───────────────────────────────────────────
 
 export async function getGraphStats(): Promise<any> {
@@ -241,7 +329,13 @@ export async function getGraphStats(): Promise<any> {
     CALL {
       MATCH (c:Chapter) RETURN count(c) AS chapter_count
     }
-      MATCH (b:Book) RETURN count(b) AS book_count, verse_count, chapter_count
+    CALL {
+      MATCH (p:Person) RETURN count(p) AS person_count
+    }
+    CALL {
+      MATCH ()-[r:MENTIONS]->() RETURN count(r) AS mentions_count
+    }
+      MATCH (b:Book) RETURN count(b) AS book_count, verse_count, chapter_count, person_count, mentions_count
   `;
   const rows = await queryNeo4j(cypher);
   return rows[0] || {};

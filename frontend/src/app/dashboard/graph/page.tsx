@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { AdvancedGraphExplorer } from "@/components/AdvancedGraphExplorer";
+import { GraphExplorer } from "@/components/GraphExplorer";
 
 export default function GraphPage() {
   return (
@@ -10,7 +10,7 @@ export default function GraphPage() {
       animate={{ opacity: 1 }}
       className="h-[calc(100vh-140px)] -m-6"
     >
-      <AdvancedGraphExplorer />
+      <GraphExplorer />
     </motion.div>
   );
 }

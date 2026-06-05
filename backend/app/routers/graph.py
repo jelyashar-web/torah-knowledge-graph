@@ -100,3 +100,126 @@ async def book_structure(book: str):
             raise HTTPException(status_code=404, detail="Book not found")
 
     return {"book": record["book"], "chapters": record["chapters"]}
+
+
+@router.get("/people")
+async def list_people():
+    """Return all Torah people (Person nodes)."""
+    driver = await get_driver()
+    async with driver.session() as session:
+        result = await session.run(
+            """
+            MATCH (p:Person)
+            OPTIONAL MATCH (p)<-[:MENTIONS]-(v:Verse)
+            WITH p, count(v) AS verse_count
+            RETURN p {.*} AS person, verse_count
+            ORDER BY p.name
+            """
+        )
+        records = [record.data() async for record in result]
+    return {"people": [{**r["person"], "verses": r["verse_count"]} for r in records]}
+
+
+@router.get("/people/{person_ref}")
+async def get_person(person_ref: str):
+    """Get single person with relationships."""
+    driver = await get_driver()
+    async with driver.session() as session:
+        result = await session.run(
+            """
+            MATCH (p:Person {ref: $ref})
+            OPTIONAL MATCH (p)<-[:MENTIONS]-(v:Verse)
+            WITH p, count(v) AS verse_count, collect(v.ref)[0..5] AS verse_refs
+            OPTIONAL MATCH (p)-[r]-(other:Person)
+            WITH p, verse_count, verse_refs, collect({type: type(r), person: other {.*}})[0..10] AS relations
+            RETURN p {.*} AS person, verse_count, verse_refs, relations
+            """,
+            ref=person_ref,
+        )
+        record = await result.single()
+        if not record:
+            raise HTTPException(status_code=404, detail="Person not found")
+    return {
+        **record["person"],
+        "verses": record["verse_count"],
+        "verse_refs": record["verse_refs"],
+        "relations": record["relations"],
+    }
+
+
+@router.get("/subgraph")
+async def get_subgraph(
+    center_ref: str = "Genesis 1:1",
+    depth: int = 2,
+    limit: int = 100,
+):
+    """Return a subgraph around a central node (verse ref or person ref)."""
+    driver = await get_driver()
+    async with driver.session() as session:
+        # Try Verse first, then Person
+        result = await session.run(
+            """
+            MATCH path = (center)-[r*1..$depth]-(neighbor)
+            WHERE (center:Verse AND center.ref = $ref)
+               OR (center:Person AND center.ref = $ref)
+               OR (center:Person AND center.name = $ref)
+            WITH center, neighbor, r, path
+            LIMIT $limit
+            RETURN DISTINCT
+                center {.*, label: center.ref, type: labels(center)[0]} AS center_node,
+                neighbor {.*, label: COALESCE(neighbor.ref, neighbor.name, neighbor.title), type: labels(neighbor)[0]} AS neighbor_node,
+                [rel IN r | {type: type(rel), from: startNode(rel).ref, to: endNode(rel).ref}] AS rels
+            """,
+            ref=center_ref,
+            depth=depth,
+            limit=limit,
+        )
+        records = [record.data() async for record in result]
+
+    nodes = {}
+    edges = []
+    for r in records:
+        c = r["center_node"]
+        n = r["neighbor_node"]
+        for node in [c, n]:
+            if node and node.get("ref") and node["ref"] not in nodes:
+                nodes[node["ref"]] = {
+                    "id": node.get("ref", node.get("name", "")),
+                    "label": node.get("label", ""),
+                    "type": node.get("type", "Unknown"),
+                    **{k: v for k, v in node.items() if k not in ["label", "type", "ref"]},
+                }
+        for rel in r.get("rels", []):
+            edges.append(rel)
+
+    return {
+        "center": center_ref,
+        "depth": depth,
+        "nodes": list(nodes.values()),
+        "edges": edges,
+        "node_count": len(nodes),
+        "edge_count": len(edges),
+    }
+
+
+@router.get("/neighbors/{node_id}")
+async def get_neighbors(node_id: str, depth: int = 1, limit: int = 50):
+    """Get neighbors of any node by ID (ref)."""
+    driver = await get_driver()
+    async with driver.session() as session:
+        result = await session.run(
+            """
+            MATCH (n)
+            WHERE n.ref = $id OR n.name = $id
+            MATCH path = (n)-[r*1..$depth]-(m)
+            WHERE n <> m
+            RETURN DISTINCT m {.*, label: COALESCE(m.ref, m.name, m.title), type: labels(m)[0]} AS neighbor,
+                   [rel IN r | type(rel)] AS rel_types
+            LIMIT $limit
+            """,
+            id=node_id,
+            depth=depth,
+            limit=limit,
+        )
+        records = [record.data() async for record in result]
+    return {"node_id": node_id, "neighbors": records}

@@ -1,53 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
   Search,
-  Filter,
   BookOpen,
   Crown,
   Star,
   Sword,
   Scroll,
-  ChevronDown,
   X,
   Network,
-  ArrowRight,
+  Loader2,
 } from "lucide-react";
+import { listPeople } from "@/lib/api";
 
 interface Person {
-  id: string;
+  ref: string;
   name: string;
-  nameEn: string;
+  name_en: string;
   role: string;
   period: string;
   book: string;
-  description: string;
   verses: number;
-  connections: number;
   color: string;
 }
-
-const people: Person[] = [
-  { id: "1", name: "משה רבנו", nameEn: "Moses", role: "נביא", period: "היציאה ממצרים", book: "שמות", description: "גדול הנביאים, מקבל התורה", verses: 1467, connections: 342, color: "from-blue-500 to-indigo-600" },
-  { id: "2", name: "אברהם אבינו", nameEn: "Abraham", role: "אב האומה", period: "דור האבות", book: "בראשית", description: "אבי האמונה, נבחן בעקידה", verses: 312, connections: 198, color: "from-amber-500 to-orange-600" },
-  { id: "3", name: "דוד המלך", nameEn: "King David", role: "מלך", period: "מלכות בית דוד", book: "שמואל", description: "מלך ישראל, רועה הפסללים", verses: 1123, connections: 287, color: "from-purple-500 to-pink-600" },
-  { id: "4", name: "שלמה המלך", nameEn: "King Solomon", role: "מלך", period: "מלכות בית דוד", book: "מלכים", description: "בונה המקדש, חכם מכל אדם", verses: 456, connections: 156, color: "from-emerald-500 to-teal-600" },
-  { id: "5", name: "יוסף הצדיק", nameEn: "Joseph", role: "שליט", period: "דור האבות", book: "בראשית", description: "משנה למלך מצרים, הציל משפחתו", verses: 189, connections: 134, color: "from-cyan-500 to-blue-600" },
-  { id: "6", name: "אהרן הכהן", nameEn: "Aaron", role: "כהן גדול", period: "היציאה ממצרים", book: "שמות", description: "אחי משה, כהן גדול ראשון", verses: 534, connections: 167, color: "from-rose-500 to-pink-600" },
-  { id: "7", name: "יהושע בן נון", nameEn: "Joshua", role: "מנהיג", period: "כיבוש הארץ", book: "יהושע", description: "תלמיד משה, מכניס את ישראל לארץ", verses: 678, connections: 145, color: "from-green-500 to-emerald-600" },
-  { id: "8", name: "שמשון הגיבור", nameEn: "Samson", role: "שופט", period: "שופטים", book: "שופטים", description: "נזיר אלהים, גיבור בעל כוח על-אנושי", verses: 96, connections: 67, color: "from-red-500 to-orange-600" },
-  { id: "9", name: "שאול המלך", nameEn: "King Saul", role: "מלך", period: "מלכות שאול", book: "שמואל", description: "מלך ישראל הראשון", verses: 423, connections: 134, color: "from-slate-500 to-gray-600" },
-  { id: "10", name: "שמואל הנביא", nameEn: "Samuel", role: "נביא", period: "שופטים", book: "שמואל", description: "שופט ונביא, משיח למלכות", verses: 345, connections: 178, color: "from-yellow-500 to-amber-600" },
-  { id: "11", name: "אליהו הנביא", nameEn: "Elijah", role: "נביא", period: "מלכות ישראל", book: "מלכים", description: "נביא האש, נאבק בבעל", verses: 234, connections: 89, color: "from-orange-500 to-red-600" },
-  { id: "12", name: "אלישע הנביא", nameEn: "Elisha", role: "נביא", period: "מלכות ישראל", book: "מלכים", description: "תלמיד אליהו, עושה נפלאות", verses: 198, connections: 76, color: "from-indigo-500 to-purple-600" },
-  { id: "13", name: "חזקיהו המלך", nameEn: "Hezekiah", role: "מלך", period: "מלכות יהודה", book: "מלכים", description: "מלך צדיק, חידש עבודת המקדש", verses: 134, connections: 56, color: "from-teal-500 to-cyan-600" },
-  { id: "14", name: "יואש המלך", nameEn: "Joash", role: "מלך", period: "מלכות יהודה", book: "מלכים", description: "מלך מגיל 7, חידש המקדש", verses: 89, connections: 45, color: "from-violet-500 to-purple-600" },
-  { id: "15", name: "דבורה הנביאה", nameEn: "Deborah", role: "נביאה", period: "שופטים", book: "שופטים", description: "אישה נביאה, שופטת ומנהיגה", verses: 45, connections: 34, color: "from-fuchsia-500 to-pink-600" },
-  { id: "16", name: "גדעון בן יואש", nameEn: "Gideon", role: "שופט", period: "שופטים", book: "שופטים", description: "שופט ישראל, מנצח המדיאנים", verses: 78, connections: 56, color: "from-lime-500 to-green-600" },
-];
 
 const roleIcons: Record<string, typeof Users> = {
   נביא: Star,
@@ -58,6 +36,36 @@ const roleIcons: Record<string, typeof Users> = {
   מנהיג: Sword,
   שופט: Sword,
   נביאה: Star,
+  אב: Users,
+  אם: Users,
+  שבט: Users,
+  "בן אדם": Users,
+  צדיק: Star,
+  חכם: Star,
+  סופר: Scroll,
+  מושל: Crown,
+  מלכה: Crown,
+  גיורת: Users,
+};
+
+const roleColors: Record<string, string> = {
+  נביא: "from-blue-500 to-indigo-600",
+  "אב האומה": "from-amber-500 to-orange-600",
+  מלך: "from-purple-500 to-pink-600",
+  שליט: "from-cyan-500 to-blue-600",
+  "כהן גדול": "from-rose-500 to-pink-600",
+  מנהיג: "from-green-500 to-emerald-600",
+  שופט: "from-red-500 to-orange-600",
+  נביאה: "from-fuchsia-500 to-pink-600",
+  אב: "from-amber-500 to-orange-600",
+  אם: "from-pink-500 to-rose-600",
+  שבט: "from-teal-500 to-cyan-600",
+  צדיק: "from-yellow-500 to-amber-600",
+  חכם: "from-indigo-500 to-purple-600",
+  סופר: "from-emerald-500 to-teal-600",
+  מושל: "from-slate-500 to-gray-600",
+  מלכה: "from-violet-500 to-purple-600",
+  גיורת: "from-orange-500 to-red-600",
 };
 
 const filters = [
@@ -72,21 +80,42 @@ export default function PeopleDirectory() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
-  const [sortBy, setSortBy] = useState<"name" | "verses" | "connections">("name");
+  const [people, setPeople] = useState<Person[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<"name" | "verses">("name");
+
+  useEffect(() => {
+    loadPeople();
+  }, []);
+
+  const loadPeople = async () => {
+    setLoading(true);
+    try {
+      const data = await listPeople();
+      const enriched = (data.people || []).map((p: any) => ({
+        ...p,
+        color: roleColors[p.role] || "from-slate-500 to-gray-600",
+      }));
+      setPeople(enriched);
+    } catch (e) {
+      console.error("Failed to load people:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = people
     .filter((p) => {
       const matchesSearch =
-        p.name.includes(search) ||
-        p.nameEn.toLowerCase().includes(search.toLowerCase()) ||
-        p.description.includes(search);
+        p.name?.includes(search) ||
+        p.name_en?.toLowerCase().includes(search.toLowerCase()) ||
+        p.role?.includes(search);
       const matchesRole = activeFilter === "all" || p.role === activeFilter;
       return matchesSearch && matchesRole;
     })
     .sort((a, b) => {
-      if (sortBy === "verses") return b.verses - a.verses;
-      if (sortBy === "connections") return b.connections - a.connections;
-      return a.name.localeCompare(b.name);
+      if (sortBy === "verses") return (b.verses || 0) - (a.verses || 0);
+      return (a.name || "").localeCompare(b.name || "");
     });
 
   return (
@@ -105,7 +134,6 @@ export default function PeopleDirectory() {
           {[
             { key: "name", label: "שם" },
             { key: "verses", label: "פסוקים" },
-            { key: "connections", label: "קשרים" },
           ].map((s) => (
             <button
               key={s.key}
@@ -122,26 +150,24 @@ export default function PeopleDirectory() {
         </div>
       </motion.div>
 
-      {/* Search & Filters */}
+      {/* Search */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="flex flex-col md:flex-row gap-4"
+        className="relative"
       >
-        <div className="relative flex-1">
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="חפש אישיות... (למשל: משה, דוד, דבורה)"
-            className="w-full pr-12 pl-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all outline-none"
-          />
-        </div>
+        <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="חפש אישיות... (למשל: משה, דוד, דבורה)"
+          className="w-full pr-12 pl-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all outline-none"
+        />
       </motion.div>
 
-      {/* Role Filters */}
+      {/* Filters */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -163,19 +189,27 @@ export default function PeopleDirectory() {
         ))}
       </motion.div>
 
-      {/* Results Count */}
+      {/* Count */}
       <div className="text-sm text-slate-500">
         מציג {filtered.length} מתוך {people.length} אישים
       </div>
 
-      {/* People Grid */}
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+          <span className="mr-3 text-slate-400">טוען דמויות...</span>
+        </div>
+      )}
+
+      {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <AnimatePresence mode="popLayout">
-          {filtered.map((person, i) => {
+          {!loading && filtered.map((person: any, i: number) => {
             const RoleIcon = roleIcons[person.role] || Users;
             return (
               <motion.div
-                key={person.id}
+                key={person.ref}
                 layout
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -187,9 +221,7 @@ export default function PeopleDirectory() {
                 className="group cursor-pointer"
               >
                 <div className="relative p-5 bg-white/[0.03] border border-white/5 rounded-2xl backdrop-blur-sm hover:bg-white/[0.07] hover:border-white/10 transition-all overflow-hidden">
-                  {/* Gradient accent */}
                   <div className={`absolute top-0 right-0 w-full h-1 bg-gradient-to-l ${person.color}`} />
-
                   <div className="flex items-start justify-between mb-4">
                     <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${person.color} flex items-center justify-center shadow-lg`}>
                       <RoleIcon className="w-5 h-5 text-white" />
@@ -199,21 +231,18 @@ export default function PeopleDirectory() {
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-white mb-1 group-hover:text-amber-400 transition-colors">
-                    {person.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 mb-3">{person.nameEn}</p>
-
-                  <p className="text-sm text-slate-400 mb-4 line-clamp-2">{person.description}</p>
+                  <h3 className="text-lg font-bold text-white mb-1 group-hover:text-amber-400 transition-colors">{person.name}</h3>
+                  <p className="text-xs text-slate-500 mb-3">{person.name_en}</p>
+                  <p className="text-sm text-slate-400 mb-4 line-clamp-2">{person.period}</p>
 
                   <div className="flex items-center gap-4 text-xs text-slate-500">
                     <div className="flex items-center gap-1">
                       <BookOpen className="w-3.5 h-3.5" />
-                      <span>{person.verses.toLocaleString()} פסוקים</span>
+                      <span>{person.verses || 0} פסוקים</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Network className="w-3.5 h-3.5" />
-                      <span>{person.connections} קשרים</span>
+                      <span>{person.role}</span>
                     </div>
                   </div>
                 </div>
@@ -223,7 +252,7 @@ export default function PeopleDirectory() {
         </AnimatePresence>
       </div>
 
-      {/* Detail Modal */}
+      {/* Modal */}
       <AnimatePresence>
         {selectedPerson && (
           <>
@@ -248,39 +277,31 @@ export default function PeopleDirectory() {
                     </div>
                     <div>
                       <h2 className="text-2xl font-bold text-white">{selectedPerson.name}</h2>
-                      <p className="text-slate-400">{selectedPerson.nameEn}</p>
+                      <p className="text-slate-400">{selectedPerson.name_en}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setSelectedPerson(null)}
-                    className="p-2 text-slate-400 hover:text-white transition-colors"
-                  >
+                  <button onClick={() => setSelectedPerson(null)} className="p-2 text-slate-400 hover:text-white">
                     <X className="w-6 h-6" />
                   </button>
                 </div>
 
                 <div className="space-y-4">
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                      <div className="text-2xl font-bold text-amber-400">{selectedPerson.verses.toLocaleString()}</div>
+                    <div className="p-4 bg-white/5 rounded-xl">
+                      <div className="text-2xl font-bold text-amber-400">{selectedPerson.verses || 0}</div>
                       <div className="text-xs text-slate-500">פסוקים</div>
                     </div>
-                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                      <div className="text-2xl font-bold text-blue-400">{selectedPerson.connections}</div>
-                      <div className="text-xs text-slate-500">קשרים</div>
+                    <div className="p-4 bg-white/5 rounded-xl">
+                      <div className="text-2xl font-bold text-blue-400">{selectedPerson.role}</div>
+                      <div className="text-xs text-slate-500">תפקיד</div>
                     </div>
-                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                    <div className="p-4 bg-white/5 rounded-xl">
                       <div className="text-2xl font-bold text-purple-400">{selectedPerson.book}</div>
                       <div className="text-xs text-slate-500">ספר ראשי</div>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
-                    <div className="text-sm text-slate-400 mb-2">תיאור</div>
-                    <p className="text-white">{selectedPerson.description}</p>
-                  </div>
-
-                  <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                  <div className="p-4 bg-white/5 rounded-xl">
                     <div className="text-sm text-slate-400 mb-2">תקופה</div>
                     <p className="text-white">{selectedPerson.period}</p>
                   </div>

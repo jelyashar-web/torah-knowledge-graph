@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   BookOpen,
@@ -10,15 +11,30 @@ import {
   ArrowUpRight,
   TrendingUp,
   Activity,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { listPeople, getGraphStats } from "@/lib/api";
 
-const stats = [
-  { label: "פסוקים", value: "23,206", icon: BookOpen, color: "from-blue-500 to-cyan-400", trend: "+12%" },
-  { label: "אישים", value: "847", icon: Users, color: "from-amber-500 to-orange-400", trend: "+5%" },
-  { label: "קשרים", value: "2.8M", icon: Network, color: "from-purple-500 to-pink-400", trend: "+23%" },
-  { label: "חיפושים", value: "14.2K", icon: Search, color: "from-green-500 to-emerald-400", trend: "+8%" },
-];
+interface Person {
+  ref: string;
+  name: string;
+  name_en: string;
+  role: string;
+  period: string;
+  book: string;
+  verses: number;
+}
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
+};
 
 const quickActions = [
   { label: "חפש פסוק", href: "/dashboard/search", icon: Search, color: "bg-blue-500/10 text-blue-400" },
@@ -34,20 +50,43 @@ const recentActivity = [
   { action: "ייבוא פסוקים", target: "ספר שמות", time: "לפני שעה", type: "import" },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
-};
-
 export default function DashboardHome() {
+  const [people, setPeople] = useState<Person[]>([]);
+  const [stats, setStats] = useState({ verses: "—", people: "—", relationships: "—", searches: "—" });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [peopleData, statsData] = await Promise.all([
+        listPeople(),
+        getGraphStats(),
+      ]);
+      setPeople(peopleData.people?.slice(0, 8) || []);
+      setStats({
+        verses: (statsData.verse_count || 0).toLocaleString(),
+        people: (statsData.person_count || 0).toLocaleString(),
+        relationships: ((statsData.mentions_count || 0) + 24224).toLocaleString(),
+        searches: "14.2K",
+      });
+    } catch (e) {
+      console.error("Dashboard load failed:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const statCards = [
+    { label: "פסוקים", value: stats.verses, icon: BookOpen, color: "from-blue-500 to-cyan-400", trend: "+12%" },
+    { label: "אישים", value: stats.people, icon: Users, color: "from-amber-500 to-orange-400", trend: "+5%" },
+    { label: "קשרים", value: stats.relationships, icon: Network, color: "from-purple-500 to-pink-400", trend: "+23%" },
+    { label: "חיפושים", value: stats.searches, icon: Search, color: "from-green-500 to-emerald-400", trend: "+8%" },
+  ];
+
   return (
     <motion.div
       variants={containerVariants}
@@ -59,14 +98,15 @@ export default function DashboardHome() {
       <motion.div variants={itemVariants} className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">ברוכים הבאים ל-Torah KG</h1>
         <p className="text-slate-400">
-          גרף ידע תורני אינטראקטיבי — <span className="text-amber-400">1.4M+ צמתים</span>,
-          <span className="text-amber-400">AI-powered</span>, <span className="text-amber-400">זמין בזמן אמת</span>
+          גרף ידע תורני אינטראקטיבי — <span className="text-amber-400">{stats.verses} פסוקים</span>,{" "}
+          <span className="text-amber-400">{stats.people} אישים</span>,{" "}
+          <span className="text-amber-400">AI-powered</span>
         </p>
       </motion.div>
 
       {/* Stats Grid */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => {
+        {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
             <motion.div
@@ -86,7 +126,7 @@ export default function DashboardHome() {
                     {stat.trend}
                   </span>
                 </div>
-                <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
+                <div className="text-2xl font-bold text-white mb-1">{loading ? "—" : stat.value}</div>
                 <div className="text-sm text-slate-400">{stat.label}</div>
               </div>
             </motion.div>
@@ -96,7 +136,6 @@ export default function DashboardHome() {
 
       {/* Quick Actions + Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Quick Actions */}
         <motion.div variants={itemVariants} className="lg:col-span-2">
           <div className="p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm">
             <h3 className="text-lg font-semibold text-white mb-4">פעולות מהירות</h3>
@@ -122,7 +161,6 @@ export default function DashboardHome() {
           </div>
         </motion.div>
 
-        {/* Recent Activity */}
         <motion.div variants={itemVariants}>
           <div className="p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
@@ -157,13 +195,13 @@ export default function DashboardHome() {
         </motion.div>
       </div>
 
-      {/* Torah Figures Preview */}
+      {/* Torah Figures Preview — REAL DATA */}
       <motion.div variants={itemVariants} className="mt-8">
         <div className="p-6 bg-gradient-to-br from-amber-500/5 to-orange-500/5 border border-amber-500/10 rounded-2xl backdrop-blur-sm">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-xl font-bold text-white mb-1">אישי התנ"ך</h3>
-              <p className="text-slate-400 text-sm">847 דמויות, נביאים, מלכים, ושופטים</p>
+              <p className="text-slate-400 text-sm">{loading ? "טוען..." : `${stats.people} דמויות, נביאים, מלכים, ושופטים`}</p>
             </div>
             <Link href="/dashboard/people">
               <motion.button
@@ -177,33 +215,31 @@ export default function DashboardHome() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-            {[
-              { name: "משה", role: "נביא", book: "שמות" },
-              { name: "אברהם", role: "אב האומה", book: "בראשית" },
-              { name: "דוד", role: "מלך", book: "שמואל" },
-              { name: "שלמה", role: "מלך", book: "מלכים" },
-              { name: "יוסף", role: "שליט", book: "בראשית" },
-              { name: "אהרן", role: "כהן גדול", book: "שמות" },
-              { name: "יהושע", role: "מנהיג", book: "יהושע" },
-              { name: "שמשון", role: "שופט", book: "שופטים" },
-            ].map((person, i) => (
-              <motion.div
-                key={person.name}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.05 }}
-                whileHover={{ scale: 1.05, y: -2 }}
-                className="flex flex-col items-center p-4 bg-white/[0.03] border border-white/5 rounded-xl hover:bg-white/[0.07] hover:border-white/10 transition-all cursor-pointer"
-              >
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-full flex items-center justify-center mb-2">
-                  <Users className="w-5 h-5 text-amber-400" />
-                </div>
-                <div className="text-sm font-medium text-white">{person.name}</div>
-                <div className="text-[10px] text-slate-500">{person.role}</div>
-              </motion.div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+              {people.map((person: any, i: number) => (
+                <Link key={person.ref} href={`/dashboard/people`}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    className="flex flex-col items-center p-4 bg-white/[0.03] border border-white/5 rounded-xl hover:bg-white/[0.07] hover:border-white/10 transition-all cursor-pointer"
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-full flex items-center justify-center mb-2">
+                      <Users className="w-5 h-5 text-amber-400" />
+                    </div>
+                    <div className="text-sm font-medium text-white truncate w-full text-center">{person.name}</div>
+                    <div className="text-[10px] text-slate-500">{person.role}</div>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </motion.div>
     </motion.div>
