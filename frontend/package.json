@@ -12,6 +12,7 @@
     "@apollo/client": "^4.2.2",
     "@xyflow/react": "^12.11.0",
     "axios": "^1.17.0",
+    "framer-motion": "^12.40.0",
     "graphql": "^16.14.1",
     "graphql-ws": "^6.0.8",
     "lucide-react": "^1.17.0",
